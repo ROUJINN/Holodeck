@@ -1,26 +1,32 @@
 import copy
 import os
 from argparse import ArgumentParser
-from typing import Dict, Any
+from typing import Any, Dict
 
 import compress_json
 import numpy as np
-from PIL import Image
 from ai2thor.controller import Controller
 from ai2thor.hooks.procedural_asset_hook import ProceduralAssetHookRunner
+from ai2thor.platform import CloudRendering
 from moviepy.editor import (
-    TextClip,
     CompositeVideoClip,
-    concatenate_videoclips,
     ImageSequenceClip,
+    TextClip,
+    concatenate_videoclips,
 )
+from PIL import Image
 from tqdm import tqdm
 
 from ai2holodeck.constants import HOLODECK_BASE_DATA_DIR, THOR_COMMIT_ID
 
 
 def all_edges_white(img):
-    # Define a white pixel
+    # Define a white pixel (handle both RGB and RGBA)
+    # Only check RGB channels, ignore alpha if present
+    if img.shape[-1] == 4:
+        # RGBA image, only check first 3 channels
+        img = img[..., :3]
+
     white = [255, 255, 255]
 
     # Check top edge
@@ -55,6 +61,7 @@ def get_top_down_frame(scene, objaverse_asset_dir, width=1024, height=1024):
             asset_symlink=True,
             verbose=True,
         ),
+        platform=CloudRendering,
     )
 
     # Setup the top-down camera
@@ -116,6 +123,7 @@ def get_top_down_frame_ithor(scene, objaverse_asset_dir, width=1024, height=1024
             asset_symlink=True,
             verbose=True,
         ),
+        platform=CloudRendering,
     )
 
     controller.reset(scene)
@@ -138,11 +146,11 @@ def get_top_down_frame_ithor(scene, objaverse_asset_dir, width=1024, height=1024
 
 
 def main(save_path):
-    scene = compress_json.load(save_path + f"scene.json", "r")
+    scene = compress_json.load(save_path + "scene.json", "r")
     image = get_top_down_frame(scene)
-    image.save(f"test1.png")
+    image.save("test1.png")
 
-    compress_json.dump(scene, save_path + f"scene.json", json_kwargs=dict(indent=4))
+    compress_json.dump(scene, save_path + "scene.json", json_kwargs=dict(indent=4))
 
 
 def visualize_asset(asset_id, version):
@@ -158,7 +166,8 @@ def visualize_asset(asset_id, version):
         }
     ]
     image = get_top_down_frame(empty_house, version)
-    image.show()
+    # image.show()  # 注释掉，避免在无 GUI 环境下报错
+    return image
 
 
 def get_room_images(scene, objaverse_asset_dir, width=1024, height=1024):
@@ -176,6 +185,7 @@ def get_room_images(scene, objaverse_asset_dir, width=1024, height=1024):
             asset_symlink=True,
             verbose=True,
         ),
+        platform=CloudRendering,
     )
 
     wall_height = max([point["y"] for point in scene["walls"][0]["polygon"]])
@@ -250,6 +260,7 @@ def ithor_video(scene, objaverse_asset_dir, width, height, scene_type):
             asset_symlink=True,
             verbose=True,
         ),
+        platform=CloudRendering,
     )
 
     event = controller.step(action="GetMapViewCameraProperties", raise_for_failure=True)
@@ -335,6 +346,7 @@ def room_video(scene, objaverse_asset_dir, width, height):
             asset_symlink=True,
             verbose=True,
         ),
+        platform=CloudRendering,
     )
 
     try:
@@ -495,7 +507,8 @@ if __name__ == "__main__":
 
     if args.mode == "top_down_frame":
         image = get_top_down_frame(scene, args.objaverse_asset_dir)
-        image.show()
+        # image.show()  # 注释掉，避免在无 GUI 环境下报错
+        print("Image generated. Save it manually if needed.")
 
     elif args.mode == "room_video":
         video = room_video(scene, args.objaverse_asset_dir, 1024, 1024)

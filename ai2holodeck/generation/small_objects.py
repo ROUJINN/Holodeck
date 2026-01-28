@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from ai2thor.controller import Controller
 from ai2thor.hooks.procedural_asset_hook import ProceduralAssetHookRunner
+from ai2thor.platform import CloudRendering
 from langchain import OpenAI
 from procthor.constants import FLOOR_Y
 from procthor.utils.types import Vector3
@@ -13,8 +14,8 @@ from procthor.utils.types import Vector3
 from ai2holodeck.constants import THOR_COMMIT_ID
 from ai2holodeck.generation.objaverse_retriever import ObjathorRetriever
 from ai2holodeck.generation.utils import (
-    get_bbox_dims,
     get_annotations,
+    get_bbox_dims,
     get_secondary_properties,
 )
 
@@ -87,9 +88,9 @@ class SmallObjectGenerator:
                         placement = self.fix_placement_for_thin_assets(placement)
 
                     if small:
-                        placement["rotation"][
-                            "y"
-                        ] = y_rotation  # temporary solution for random rotation around y axis for small objects
+                        placement["rotation"]["y"] = (
+                            y_rotation  # temporary solution for random rotation around y axis for small objects
+                        )
                     # else: placement["rotation"]["y"] = receptacle2rotation[receptacle]["y"]
 
                     if not small and not thin:
@@ -167,10 +168,13 @@ class SmallObjectGenerator:
             (receptacle, small_objects, receptacle2asset_id)
             for receptacle, small_objects in receptacle2small_object_plans.items()
         ]
-        pool = multiprocessing.Pool(processes=4)
-        results = pool.map(self.select_small_objects_per_receptacle, packed_args)
-        pool.close()
-        pool.join()
+        # pool = multiprocessing.Pool(processes=4)
+        # results = pool.map(self.select_small_objects_per_receptacle, packed_args)
+        # pool.close()
+        # pool.join()
+        results = [
+            self.select_small_objects_per_receptacle(args) for args in packed_args
+        ]
 
         for result in results:
             receptacle2small_objects[result[0]] = result[1]
@@ -298,6 +302,7 @@ class SmallObjectGenerator:
                 asset_symlink=True,
                 verbose=True,
             ),
+            platform=CloudRendering,
         )
         return controller
 

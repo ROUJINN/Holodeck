@@ -10,10 +10,10 @@ import time
 import editdistance
 import matplotlib.pyplot as plt
 import numpy as np
-from langchain import PromptTemplate, OpenAI
+from langchain import OpenAI, PromptTemplate
 from rtree import index
 from scipy.interpolate import interp1d
-from shapely.geometry import Polygon, Point, box, LineString
+from shapely.geometry import LineString, Point, Polygon, box
 
 import ai2holodeck.generation.prompts as prompts
 from ai2holodeck.generation.milp_utils import *
@@ -63,7 +63,8 @@ class FloorObjectGenerator:
             (room, doors, windows, open_walls, selected_objects, use_constraint)
             for room in rooms
         ]
-        if self.multiprocessing:
+        # if self.multiprocessing:
+        if False:
             pool = multiprocessing.Pool(processes=4)
             all_placements = pool.map(self.generate_objects_per_room, packed_args)
             pool.close()
@@ -519,7 +520,7 @@ class DFS_Solver_Floor:
 
             try:
                 self.milp_dfs(bounds, objects_list, constraints, initial_state, 10)
-            except SolutionFound as e:
+            except SolutionFound:
                 print(f"Time taken: {time.time() - self.start_time}")
 
         else:
@@ -529,7 +530,7 @@ class DFS_Solver_Floor:
                 self.dfs(
                     bounds, objects_list, constraints, grid_points, initial_state, 30
                 )
-            except SolutionFound as e:
+            except SolutionFound:
                 print(f"Time taken: {time.time() - self.start_time}")
 
         print(f"Number of solutions found: {len(self.solutions)}")
@@ -561,7 +562,7 @@ class DFS_Solver_Floor:
             return placed_objects
 
         if time.time() - self.start_time > self.max_duration:
-            print(f"Time limit reached.")
+            print("Time limit reached.")
             raise SolutionFound(self.solutions)
 
         object_name, object_dim = objects_list[0]
@@ -1144,7 +1145,7 @@ class DFS_Solver_Floor:
             return placed_objects
 
         if time.time() - self.start_time > self.max_duration:
-            print(f"Time limit reached.")
+            print("Time limit reached.")
             raise SolutionFound(self.solutions)
 
         def milp_solve(soft_constraints_list, hard_constraints_list, verbose=False):
@@ -1290,7 +1291,6 @@ class DFS_Solver_Floor:
 
             # use cvxpy to solve for the hard constraints
             for object_name, object_dim in objects_list:
-
                 # by default - add soft edge constraints although this might make the solver take a longer time
                 if not any(
                     constraint["type"] == "global"
@@ -1492,7 +1492,7 @@ class DFS_Solver_Floor:
             "center alignment", objects["sofa"], solutions_1
         )
         solutions_1 = self.place_distance("near", objects["sofa"], solutions_1)
-        objects[f"coffee table"] = solutions_1[-1]
+        objects["coffee table"] = solutions_1[-1]
         self.visualize_grid(room_poly, grid_points, objects)
 
     def test_milp_placement(self, simple=False, use_milp=True):

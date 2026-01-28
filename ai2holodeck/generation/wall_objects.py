@@ -6,8 +6,8 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-from langchain import PromptTemplate, OpenAI
-from shapely.geometry import Polygon, box, Point, LineString
+from langchain import OpenAI, PromptTemplate
+from shapely.geometry import LineString, Point, Polygon, box
 from shapely.ops import substring
 
 import ai2holodeck.generation.prompts as prompts
@@ -64,10 +64,13 @@ class WallObjectGenerator:
             )
             for room in scene["rooms"]
         ]
-        pool = multiprocessing.Pool(processes=4)
-        all_placements = pool.map(self.generate_wall_objects_per_room, packed_args)
-        pool.close()
-        pool.join()
+        # pool = multiprocessing.Pool(processes=4)
+        # all_placements = pool.map(self.generate_wall_objects_per_room, packed_args)
+        # pool.close()
+        # pool.join()
+        all_placements = [
+            self.generate_wall_objects_per_room(args) for args in packed_args
+        ]
 
         for placements in all_placements:
             wall_objects += placements
@@ -393,7 +396,7 @@ class DFS_Solver_Wall:
             self.dfs(
                 room_poly, wall_objects_list, constraints, grid_points, initial_state
             )
-        except SolutionFound as e:
+        except SolutionFound:
             print(f"Time taken: {time.time() - self.start_time}")
 
         max_solution = self.get_max_solution(self.solutions)
@@ -417,7 +420,7 @@ class DFS_Solver_Wall:
             return placed_objects
 
         if time.time() - self.start_time > self.max_duration:
-            print(f"Time limit reached.")
+            print("Time limit reached.")
             raise SolutionFound(self.solutions)
 
         object_name, object_dim = wall_objects_list[0]
@@ -607,9 +610,10 @@ class DFS_Solver_Wall:
         # draw the solutions
         for object_name, solution in solutions.items():
             vertex_min, vertex_max, rotation, box_coords = solution[:-1]
-            center_x, center_y = (vertex_min[0] + vertex_max[0]) / 2, (
-                vertex_min[2] + vertex_max[2]
-            ) / 2
+            center_x, center_y = (
+                (vertex_min[0] + vertex_max[0]) / 2,
+                (vertex_min[2] + vertex_max[2]) / 2,
+            )
 
             # create a polygon for the solution
             obj_poly = Polygon(box_coords)

@@ -7,7 +7,7 @@ ASSETS_VERSION = os.environ.get("ASSETS_VERSION", "2023_09_23")
 HD_BASE_VERSION = os.environ.get("HD_BASE_VERSION", "2023_09_23")
 
 OBJATHOR_ASSETS_BASE_DIR = os.environ.get(
-    "OBJATHOR_ASSETS_BASE_DIR", os.path.expanduser(f"~/.objathor-assets")
+    "OBJATHOR_ASSETS_BASE_DIR", os.path.expanduser("~/.objathor-assets")
 )
 
 OBJATHOR_VERSIONED_DIR = os.path.join(OBJATHOR_ASSETS_BASE_DIR, ASSETS_VERSION)
@@ -29,7 +29,15 @@ if ASSETS_VERSION > "2023_09_23":
 else:
     THOR_COMMIT_ID = "3213d486cd09bcbafce33561997355983bdf8d1a"
 
+# THOR_COMMIT_ID = "3213d486cd09bcbafce33561997355983bdf8d1a"
+
 # LLM_MODEL_NAME = "gpt-4-1106-preview"
 LLM_MODEL_NAME = "gpt-4o-2024-05-13"
 
-DEBUGGING = os.environ.get("DEBUGGING", "0").lower() in ["1", "true", "True", "t", "T"]
+DEBUGGING = os.environ.get("DEBUGGING", default="0").lower() in [
+    "1",
+    "true",
+    "True",
+    "t",
+    "T",
+]

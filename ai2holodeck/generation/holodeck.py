@@ -1,6 +1,6 @@
 import datetime
 import os
-from typing import Optional, Dict, Any, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import compress_json
 import open_clip
@@ -9,15 +9,15 @@ from sentence_transformers import SentenceTransformer
 from tqdm import tqdm
 
 from ai2holodeck.constants import (
+    ABS_PATH_OF_HOLODECK,
     HOLODECK_BASE_DATA_DIR,
-    OBJATHOR_VERSIONED_DIR,
+    HOLODECK_THOR_ANNOTATIONS_PATH,
+    HOLODECK_THOR_FEATURES_DIR,
+    LLM_MODEL_NAME,
+    OBJATHOR_ANNOTATIONS_PATH,
     OBJATHOR_ASSETS_DIR,
     OBJATHOR_FEATURES_DIR,
-    OBJATHOR_ANNOTATIONS_PATH,
-    HOLODECK_THOR_FEATURES_DIR,
-    HOLODECK_THOR_ANNOTATIONS_PATH,
-    LLM_MODEL_NAME,
-    ABS_PATH_OF_HOLODECK,
+    OBJATHOR_VERSIONED_DIR,
 )
 from ai2holodeck.generation.ceiling_objects import CeilingObjectGenerator
 from ai2holodeck.generation.doors import DoorGenerator
@@ -71,6 +71,7 @@ class Holodeck:
             model_name=LLM_MODEL_NAME,
             max_tokens=2048,
             openai_api_key=openai_api_key,
+            openai_api_base="https://api.zhizengzeng.com/v1",
         )
 
         # initialize CLIP
@@ -373,7 +374,7 @@ class Holodeck:
         # save top down image
         if generate_image:
             top_image = get_top_down_frame(scene, self.objaverse_asset_dir, 1024, 1024)
-            top_image.show()
+            # top_image.show()  # 注释掉，避免在无 GUI 环境下报错
             top_image.save(os.path.join(save_dir, f"{query_name}.png"))
 
         # save video
@@ -503,7 +504,7 @@ class Holodeck:
         # save top down image
         if generate_image:
             top_image = get_top_down_frame(scene, self.objaverse_asset_dir, 1024, 1024)
-            top_image.show()
+            # top_image.show()  # 注释掉，避免在无 GUI 环境下报错
             top_image.save(f"{save_dir}/{folder_name}/{query_name}.png")
 
         return scene
