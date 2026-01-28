@@ -1,3 +1,7 @@
+python -m ai2holodeck.main --query "a living room" --original_scene data/scenes/a_living_room-2026-01-28-11-01-43-099349/a_living_room.json
+从已有场景中接着跑
+
+
 让我查看代码中已有的渲染功能： 
 
 完美！代码已经提供了渲染功能。我来创建一个简单的脚本方便你使用： 
