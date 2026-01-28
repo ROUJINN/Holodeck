@@ -33,7 +33,7 @@ def check_missing_assets():
 
     print("检查资产文件存在性...")
     for asset_id in annotations.keys():
-        asset_path = os.path.join(OBJATHOR_ASSETS_DIR, asset_id, f"{asset_id}.tar.gz")
+        asset_path = os.path.join(OBJATHOR_ASSETS_DIR, asset_id, f"{asset_id}.pkl.gz")
         if os.path.exists(asset_path):
             existing_assets.append(asset_id)
         else:

@@ -10,6 +10,7 @@ from ai2holodeck.constants import (
     HOLODECK_THOR_ANNOTATIONS_PATH,
     HOLODECK_THOR_FEATURES_DIR,
     OBJATHOR_ANNOTATIONS_PATH,
+    OBJATHOR_ASSETS_DIR,
     OBJATHOR_FEATURES_DIR,
 )
 from ai2holodeck.generation.utils import get_bbox_dims
@@ -60,16 +61,43 @@ class ObjathorRetriever:
             np.float32
         )
 
-        self.clip_features = torch.from_numpy(
-            np.concatenate([objathor_clip_features, thor_clip_features], axis=0)
+        # 过滤掉缺失的资产文件
+        print("[INFO] 检查资产文件可用性...")
+        all_uids = objathor_uids + thor_uids
+        all_clip_features = np.concatenate(
+            [objathor_clip_features, thor_clip_features], axis=0
         )
+        all_sbert_features = np.concatenate(
+            [objathor_sbert_features, thor_sbert_features], axis=0
+        )
+
+        valid_indices = []
+        missing_count = 0
+        for idx, uid in enumerate(all_uids):
+            # THOR 资产不需要检查文件
+            if uid in thor_uids:
+                valid_indices.append(idx)
+            else:
+                # 检查 Objaverse 资产文件是否存在
+                asset_path = os.path.join(OBJATHOR_ASSETS_DIR, uid, f"{uid}.pkl.gz")
+                if os.path.exists(asset_path):
+                    valid_indices.append(idx)
+                else:
+                    missing_count += 1
+
+        if missing_count > 0:
+            print(f"[INFO] 过滤掉 {missing_count} 个缺失的资产文件")
+            print(f"[INFO] 可用资产: {len(valid_indices)}/{len(all_uids)}")
+
+        # 只保留可用的资产
+        self.asset_ids = [all_uids[i] for i in valid_indices]
+        valid_clip_features = all_clip_features[valid_indices]
+        valid_sbert_features = all_sbert_features[valid_indices]
+
+        self.clip_features = torch.from_numpy(valid_clip_features)
         self.clip_features = F.normalize(self.clip_features, p=2, dim=-1)
 
-        self.sbert_features = torch.from_numpy(
-            np.concatenate([objathor_sbert_features, thor_sbert_features], axis=0)
-        )
-
-        self.asset_ids = objathor_uids + thor_uids
+        self.sbert_features = torch.from_numpy(valid_sbert_features)
 
         self.clip_model = clip_model
         self.clip_preprocess = clip_preprocess
